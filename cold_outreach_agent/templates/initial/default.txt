@@ -1,0 +1,14 @@
+Subject: Quick question for {{business_name}}
+
+Hi there,
+
+{{observation}}.
+
+I help local businesses improve their online presence and attract more customers.
+
+Would you be open to a quick chat about how I might be able to help {{business_name}}?
+
+No pressure either way - just wanted to reach out.
+
+Best,
+{{sender_name}}

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Outreach Agent - Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .status-bar {
+            background: #27ae60;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+        
+        .quick-actions {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+        
+        .quick-actions h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .footer {
+            background: #34495e;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .api-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .api-links a {
+            color: #3498db;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .api-links a:hover {
+            background: rgba(52, 152, 219, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Cold Outreach Agent</h1>
+            <p>Production-grade lead discovery and email outreach platform</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>System Operational</span>
+            </div>
+            <div>
+                <span>API Server: Running on Port 8001</span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>📊 System Status</h3>
+                    <p>All core components are operational and ready for lead discovery and outreach campaigns.</p>
+                    <a href="http://localhost:8001/api/status" target="_blank" class="btn btn-success">Check Status</a>
+                </div>
+                
+                <div class="card">
+                    <h3>🔍 Lead Discovery</h3>
+                    <p>Discover businesses using Google Maps scraping with advanced location resolution and contact extraction.</p>
+                    <a href="http://localhost:8001/api/leads" target="_blank" class="btn">View Leads</a>
+                </div>
+                
+                <div class="card">
+                    <h3>📧 Email Campaigns</h3>
+                    <p>Manage email outreach campaigns with automated follow-ups and delivery tracking.</p>
+                    <a href="http://localhost:8001/api/campaigns" target="_blank" class="btn">View Campaigns</a>
+                </div>
+                
+                <div class="card">
+                    <h3>📖 API Documentation</h3>
+                    <p>Interactive API documentation with all endpoints, schemas, and testing capabilities.</p>
+                    <a href="http://localhost:8001/docs" target="_blank" class="btn btn-warning">Open API Docs</a>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <h3>🎯 Quick Actions</h3>
+                <div class="actions-grid">
+                    <a href="http://localhost:8001/health" target="_blank" class="btn">Health Check</a>
+                    <a href="http://localhost:8001/docs" target="_blank" class="btn">API Documentation</a>
+                    <a href="http://localhost:8001/api/status" target="_blank" class="btn">System Status</a>
+                    <a href="http://localhost:8001/api/leads" target="_blank" class="btn">View Leads</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Cold Outreach Agent v1.0.0 - Production Ready</p>
+            <div class="api-links">
+                <a href="http://localhost:8001/" target="_blank">API Root</a>
+                <a href="http://localhost:8001/docs" target="_blank">Interactive Docs</a>
+                <a href="http://localhost:8001/redoc" target="_blank">ReDoc</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh status every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('http://localhost:8001/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    document.querySelector('.status-bar').style.background = '#27ae60';
+                    document.querySelector('.status-indicator span').textContent = 'System Operational';
+                } else {
+                    document.querySelector('.status-bar').style.background = '#e74c3c';
+                    document.querySelector('.status-indicator span').textContent = 'System Issues Detected';
+                }
+            } catch (error) {
+                document.querySelector('.status-bar').style.background = '#e74c3c';
+                document.querySelector('.status-indicator span').textContent = 'Connection Error';
+            }
+        }, 30000);
+        
+        // Welcome message
+        console.log('🚀 Cold Outreach Agent Control Panel Loaded');
+        console.log('📊 API Server: http://localhost:8001');
+        console.log('📖 Documentation: http://localhost:8001/docs');
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Subject: Following up - {{business_name}}
+
+Hi again,
+
+I wanted to follow up on my previous email about {{business_name}}.
+
+I know you're busy, so I'll keep this short - if you're interested in chatting about improving your online presence, I'd be happy to set up a quick call at your convenience.
+
+If not, no worries at all. I won't reach out again.
+
+Best,
+{{sender_name}}
