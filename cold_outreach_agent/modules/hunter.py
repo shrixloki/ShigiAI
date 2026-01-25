@@ -13,9 +13,9 @@ import asyncio
 from typing import Optional, List, Dict
 from datetime import datetime
 
-from config.settings import settings
-from modules.logger import action_logger
-from services.db_service import DatabaseService
+from ..config.settings import settings
+from .logger import action_logger
+from ..services.db_service import DatabaseService
 
 
 class HunterModule:

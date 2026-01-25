@@ -10,8 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
-from modules.logger import action_logger
-from services.db_service import DatabaseService
+from .logger import action_logger
+from ..services.db_service import DatabaseService
 
 
 class ScoutModule:

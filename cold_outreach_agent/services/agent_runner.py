@@ -13,9 +13,9 @@ import time
 from datetime import datetime
 from typing import Optional, Tuple
 
-from config.settings import settings
-from services.agent_state import agent_state_manager, AgentState
-from modules.logger import action_logger
+from ..config.settings import settings
+from .agent_state import agent_state_manager, AgentState
+from ..modules.logger import action_logger
 
 
 class AgentRunner:
@@ -133,7 +133,7 @@ class AgentRunner:
                 return False, f"Cannot start outreach: agent is {current_state}"
             
             # Check if there are approved leads
-            from services.db_service import DatabaseService
+            from .db_service import DatabaseService
             db = DatabaseService()
             approved_leads = db.get_approved_leads_for_outreach_sync()
             
@@ -292,8 +292,8 @@ class AgentRunner:
         import asyncio
         
         try:
-            from modules.hunter import HunterModule
-            from modules.website_analyzer import WebsiteAnalyzerModule
+            from ..modules.hunter import HunterModule
+            from ..modules.website_analyzer import WebsiteAnalyzerModule
             
             hunter = HunterModule()
             analyzer = WebsiteAnalyzerModule()
@@ -330,12 +330,12 @@ class AgentRunner:
     def _run_outreach(self):
         """Outreach execution loop - sends emails to APPROVED leads only."""
         try:
-            from modules import (
+            from ..modules import (
                 ReplyDetectorModule,
                 MessengerModule,
                 FollowUpModule
             )
-            from services.db_service import DatabaseService
+            from .db_service import DatabaseService
             
             db = DatabaseService()
             

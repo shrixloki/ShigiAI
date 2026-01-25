@@ -17,7 +17,7 @@ from enum import Enum
 from typing import Optional, Dict, Any, Tuple, List
 from dataclasses import dataclass
 
-from services.db_service import DatabaseService
+from .db_service import DatabaseService
 
 
 class LeadLifecycleState(str, Enum):

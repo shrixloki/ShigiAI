@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from config.settings import settings
+from ..config.settings import settings
 
 
 class ActionLogger:
@@ -29,7 +29,7 @@ class ActionLogger:
     def db(self):
         """Lazy load database service."""
         if self._db is None:
-            from services.db_service import DatabaseService
+            from ..services.db_service import DatabaseService
             self._db = DatabaseService()
         return self._db
     

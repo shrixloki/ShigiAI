@@ -9,8 +9,8 @@ import re
 from typing import Optional
 from urllib.parse import urlparse
 
-from modules.logger import action_logger
-from services.db_service import DatabaseService
+from .logger import action_logger
+from ..services.db_service import DatabaseService
 
 
 # Valid tags

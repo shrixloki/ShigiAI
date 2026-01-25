@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from config.settings import settings
+from ..config.settings import settings
 
 
 def _run_async(coro):

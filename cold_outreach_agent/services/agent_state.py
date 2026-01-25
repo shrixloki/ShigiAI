@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Tuple
 
-from config.settings import settings
+from ..config.settings import settings
 
 
 class AgentState(str, Enum):
