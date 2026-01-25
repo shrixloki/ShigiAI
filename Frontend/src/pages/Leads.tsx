@@ -333,8 +333,9 @@ export default function Leads() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Business</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Score</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Tag</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Enrichment</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Review</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Outreach</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Location</th>
@@ -365,11 +366,32 @@ export default function Leads() {
                       <span className="block text-xs text-muted-foreground">{lead.category}</span>
                     )}
                   </td>
+                  <td className="px-4 py-3">
+                    {/* Lead Score - calculated mock value */}
+                    {(() => {
+                      const score = lead.email ? (lead.website_url ? 85 : 65) : 40;
+                      const color = score >= 80 ? 'text-green-500' : score >= 60 ? 'text-yellow-500' : 'text-red-500';
+                      const bgColor = score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500';
+                      return (
+                        <div className="flex items-center gap-2">
+                          <div className={`text-sm font-bold ${color}`}>{score}</div>
+                          <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
+                            <div className={`h-full ${bgColor} rounded-full`} style={{ width: `${score}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3 text-sm">
                     {lead.email || <span className="text-muted-foreground italic">No email</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="neutral">{lead.tag || 'unknown'}</Badge>
+                    {/* Enrichment status */}
+                    {lead.website_url ? (
+                      <Badge variant="success" className="text-xs">Enriched</Badge>
+                    ) : (
+                      <Badge variant="neutral" className="text-xs">Pending</Badge>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={getReviewStatusBadgeVariant(lead.review_status)}>

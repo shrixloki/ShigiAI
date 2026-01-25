@@ -248,5 +248,161 @@ export const api = {
             category: category || 'general'
         });
         return response.data;
+    },
+
+    // Enrichment
+    enrichLead: async (leadId: string): Promise<any> => {
+        const response = await apiClient.post(`/api/enrichment/enrich/${leadId}`);
+        return response.data;
+    },
+
+    getEnrichmentData: async (leadId: string): Promise<any> => {
+        const response = await apiClient.get(`/api/enrichment/${leadId}`);
+        return response.data;
+    },
+
+    // Scoring
+    getLeadScore: async (leadId: string): Promise<any> => {
+        const response = await apiClient.get(`/api/scoring/${leadId}`);
+        return response.data;
+    },
+
+    updateLeadScore: async (leadId: string, overrideScore: number, reason: string): Promise<any> => {
+        const response = await apiClient.post(`/api/scoring/${leadId}/override`, {
+            override_score: overrideScore,
+            reason
+        });
+        return response.data;
+    },
+
+    // Analytics
+    getAnalyticsDashboard: async (): Promise<any> => {
+        const response = await apiClient.get('/api/analytics/dashboard');
+        return response.data;
+    },
+
+    getCampaignMetrics: async (): Promise<any> => {
+        const response = await apiClient.get('/api/analytics/campaigns');
+        return response.data;
+    },
+
+    getFunnelMetrics: async (): Promise<any> => {
+        const response = await apiClient.get('/api/analytics/funnel');
+        return response.data;
+    },
+
+    // Campaigns
+    getCampaigns: async (): Promise<any> => {
+        const response = await apiClient.get('/api/campaigns');
+        return response.data;
+    },
+
+    createCampaign: async (name: string, steps: any[]): Promise<any> => {
+        const response = await apiClient.post('/api/campaigns', { name, steps });
+        return response.data;
+    },
+
+    updateCampaign: async (campaignId: string, data: any): Promise<any> => {
+        const response = await apiClient.put(`/api/campaigns/${campaignId}`, data);
+        return response.data;
+    },
+
+    toggleCampaign: async (campaignId: string, active: boolean): Promise<any> => {
+        const response = await apiClient.post(`/api/campaigns/${campaignId}/toggle`, { active });
+        return response.data;
+    },
+
+    // CRM Pipeline
+    getOpportunities: async (): Promise<any> => {
+        const response = await apiClient.get('/api/crm/opportunities');
+        return response.data;
+    },
+
+    updateOpportunityStage: async (opportunityId: string, stage: string): Promise<any> => {
+        const response = await apiClient.put(`/api/crm/opportunities/${opportunityId}/stage`, { stage });
+        return response.data;
+    },
+
+    addLeadNote: async (leadId: string, note: string): Promise<any> => {
+        const response = await apiClient.post(`/api/crm/leads/${leadId}/notes`, { note });
+        return response.data;
+    },
+
+    getLeadNotes: async (leadId: string): Promise<any> => {
+        const response = await apiClient.get(`/api/crm/leads/${leadId}/notes`);
+        return response.data;
+    },
+
+    getLeadTimeline: async (leadId: string): Promise<any> => {
+        const response = await apiClient.get(`/api/crm/leads/${leadId}/timeline`);
+        return response.data;
+    },
+
+    // User Management
+    getUsers: async (): Promise<any> => {
+        const response = await apiClient.get('/api/users');
+        return response.data;
+    },
+
+    createUser: async (user: { name: string; email: string; role: string }): Promise<any> => {
+        const response = await apiClient.post('/api/users', user);
+        return response.data;
+    },
+
+    updateUserRole: async (userId: string, role: string): Promise<any> => {
+        const response = await apiClient.put(`/api/users/${userId}/role`, { role });
+        return response.data;
+    },
+
+    // Sync & Import
+    importCSV: async (file: File): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post('/api/import/csv', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    exportCSV: async (): Promise<Blob> => {
+        const response = await apiClient.get('/api/export/csv', { responseType: 'blob' });
+        return response.data;
+    },
+
+    syncGoogleSheets: async (sheetsUrl: string): Promise<any> => {
+        const response = await apiClient.post('/api/sync/google-sheets', { sheets_url: sheetsUrl });
+        return response.data;
+    },
+
+    // Webhooks
+    getWebhooks: async (): Promise<any> => {
+        const response = await apiClient.get('/api/webhooks');
+        return response.data;
+    },
+
+    createWebhook: async (webhook: { name: string; url: string; events: string[] }): Promise<any> => {
+        const response = await apiClient.post('/api/webhooks', webhook);
+        return response.data;
+    },
+
+    toggleWebhook: async (webhookId: string, enabled: boolean): Promise<any> => {
+        const response = await apiClient.put(`/api/webhooks/${webhookId}/toggle`, { enabled });
+        return response.data;
+    },
+
+    // Compliance
+    getComplianceStatus: async (): Promise<any> => {
+        const response = await apiClient.get('/api/compliance/status');
+        return response.data;
+    },
+
+    addToDoNotContact: async (email: string): Promise<any> => {
+        const response = await apiClient.post('/api/compliance/do-not-contact', { email });
+        return response.data;
+    },
+
+    getDoNotContactList: async (): Promise<any> => {
+        const response = await apiClient.get('/api/compliance/do-not-contact');
+        return response.data;
     }
 };
