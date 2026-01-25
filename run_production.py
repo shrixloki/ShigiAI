@@ -18,27 +18,27 @@ try:
     import asyncio
     
     if __name__ == "__main__":
-        print("🚀 Starting Cold Outreach Agent Production System...")
-        print(f"📁 Project Root: {project_root}")
-        print(f"🐍 Python Path: {sys.path[0]}")
+        print("Starting Cold Outreach Agent Production System...")
+        print(f"Project Root: {project_root}")
+        print(f"Python Path: {sys.path[0]}")
         
         # Run the main application
-        sys.exit(asyncio.run(main()))
+        sys.exit(main())
         
 except ImportError as e:
-    print(f"❌ Import Error: {e}")
-    print("🔧 Trying to fix import paths...")
+    print(f"Import Error: {e}")
+    print("Trying to fix import paths...")
     
     # Alternative approach - run the start-production.py script
     try:
         exec(open(project_root / "start-production.py").read())
     except Exception as e2:
-        print(f"❌ Failed to run start-production.py: {e2}")
-        print("📋 Available files:")
+        print(f"Failed to run start-production.py: {e2}")
+        print("Available files:")
         for file in project_root.glob("start*.py"):
             print(f"  - {file.name}")
         sys.exit(1)
 
 except Exception as e:
-    print(f"❌ Unexpected error: {e}")
+    print(f"Unexpected error: {e}")
     sys.exit(1)

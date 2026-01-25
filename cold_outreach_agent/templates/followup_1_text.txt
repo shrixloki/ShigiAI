@@ -1,0 +1,12 @@
+Hi {{ contact_name or 'there' }},
+
+I wanted to follow up on my previous email about {{ business_name }}.
+
+I understand you're busy, but I thought you might be interested in knowing that businesses similar to yours have seen {{ benefit_example }}.
+
+If you'd like to learn more, I'm happy to share a quick case study that might be relevant to {{ business_name }}.
+
+Just reply with "yes" and I'll send it over.
+
+Best,
+{{ sender_name }}

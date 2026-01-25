@@ -5,18 +5,27 @@ let lastKnownData = {
   leads: null,
   logs: null,
   system: null,
-  agentState: null
+  agentState: null,
+  analytics: null,
+  enrichment: null
 };
 
-async function fetchWithFallback(endpoint, cacheKey) {
+async function fetchWithFallback(endpoint, cacheKey, options = {}) {
   try {
     const res = await fetch(`${API_URL}${endpoint}`, {
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000),
+      ...options
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    lastKnownData[cacheKey] = data;
-    return { data, stale: false, error: null };
+    if (data.success && data.data) {
+      lastKnownData[cacheKey] = data.data;
+      return { data: data.data, stale: false, error: null };
+    }
+    // Handle standard success response wrapper if present, or raw data
+    const result = data.data || data;
+    lastKnownData[cacheKey] = result;
+    return { data: result, stale: false, error: null };
   } catch (err) {
     if (lastKnownData[cacheKey]) {
       return { data: lastKnownData[cacheKey], stale: true, error: err.message };
@@ -34,7 +43,8 @@ export async function getOverview() {
 export async function getLeads(filters = {}) {
   const params = new URLSearchParams();
   if (filters.review_status) params.set('review_status', filters.review_status);
-  if (filters.outreach_status) params.set('outreach_status', filters.outreach_status);
+  if (filters.lifecycle_state) params.set('lifecycle_state', filters.lifecycle_state);
+  if (filters.page) params.set('page', filters.page);
   const query = params.toString() ? `?${params}` : '';
   return fetchWithFallback(`/api/leads${query}`, 'leads');
 }
@@ -45,7 +55,8 @@ export async function getLeadDetail(leadId) {
       signal: AbortSignal.timeout(5000)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return { data: await res.json(), error: null };
+    const json = await res.json();
+    return { data: json.data || json, error: null };
   } catch (err) {
     return { data: null, error: err.message };
   }
@@ -61,17 +72,30 @@ export async function getLogs(filters = {}) {
 }
 
 export async function getSystem() {
-  return fetchWithFallback('/api/system', 'system');
+  return fetchWithFallback('/system/status', 'system');
 }
 
-export async function getAgentState() {
-  return fetchWithFallback('/api/agent/state', 'agentState');
+// --- New Service Endpoints ---
+
+export async function getAnalyticsDashboard() {
+  return fetchWithFallback('/api/analytics/dashboard', 'analytics');
 }
 
-export async function getControlLogs(limit = 50) {
-  const params = new URLSearchParams({ limit: limit.toString() });
-  return fetchWithFallback(`/api/agent/control-logs?${params}`, 'controlLogs');
+export async function getEnrichmentData(leadId) {
+  // This triggers enrichment if not present, or gets it
+  // For now we assume a POST to trigger
+  return postAgentControl(`/api/enrichment/enrich/${leadId}`);
 }
+
+export async function getLeadScore(leadId) {
+  return fetchWithFallback(`/api/scoring/${leadId}`, `score_${leadId}`);
+}
+
+export async function getPublicDirectory(query) {
+  const q = query ? `?query=${query}` : '';
+  return fetchWithFallback(`/api/public/directory${q}`, 'directory');
+}
+
 
 // --- Agent Control ---
 
@@ -83,23 +107,23 @@ async function postAgentControl(endpoint, body = null) {
       signal: AbortSignal.timeout(10000)
     };
     if (body) options.body = JSON.stringify(body);
-    
+
     const res = await fetch(`${API_URL}${endpoint}`, options);
     const data = await res.json();
-    
+
     if (!res.ok) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: data.detail || `HTTP ${res.status}`,
         state: data.state || null
       };
     }
-    
-    return { 
-      success: true, 
-      message: data.message,
-      state: data.state,
-      error: null 
+
+    return {
+      success: true,
+      data: data.data,
+      metadata: data.metadata,
+      error: null
     };
   } catch (err) {
     return { success: false, error: err.message, state: null };
@@ -108,37 +132,7 @@ async function postAgentControl(endpoint, body = null) {
 
 // Discovery Control
 export async function startDiscovery(query, location, maxResults = 50) {
-  return postAgentControl('/api/agent/discover/start', { query, location, max_results: maxResults });
-}
-
-export async function stopDiscovery() {
-  return postAgentControl('/api/agent/discover/stop');
-}
-
-// Outreach Control
-export async function startOutreach() {
-  return postAgentControl('/api/agent/outreach/start');
-}
-
-export async function stopOutreach() {
-  return postAgentControl('/api/agent/outreach/stop');
-}
-
-// Common Controls
-export async function pauseAgent() {
-  return postAgentControl('/api/agent/pause');
-}
-
-export async function resumeAgent() {
-  return postAgentControl('/api/agent/resume');
-}
-
-export async function stopAgent() {
-  return postAgentControl('/api/agent/stop');
-}
-
-export async function resetAgent() {
-  return postAgentControl('/api/agent/reset');
+  return postAgentControl('/api/discovery/start', { query, location, max_results: maxResults });
 }
 
 // --- Lead Review Actions ---
@@ -147,14 +141,6 @@ export async function approveLead(leadId) {
   return postAgentControl(`/api/leads/${leadId}/approve`);
 }
 
-export async function rejectLead(leadId) {
-  return postAgentControl(`/api/leads/${leadId}/reject`);
-}
-
 export async function bulkApproveLeads(leadIds) {
   return postAgentControl('/api/leads/bulk-approve', { lead_ids: leadIds });
-}
-
-export async function bulkRejectLeads(leadIds) {
-  return postAgentControl('/api/leads/bulk-reject', { lead_ids: leadIds });
 }

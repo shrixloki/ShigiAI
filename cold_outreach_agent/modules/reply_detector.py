@@ -4,9 +4,9 @@ Reply Detector Module - Polls inbox and stops automation on reply.
 Immediately stops outreach for any lead that responds.
 """
 
-from modules.logger import action_logger
-from services.db_service import DatabaseService
-from services.email_service_simple import EmailService
+from .logger import action_logger
+from ..services.db_service import DatabaseService
+from ..services.email_service_simple import EmailService
 
 
 class ReplyDetectorModule:

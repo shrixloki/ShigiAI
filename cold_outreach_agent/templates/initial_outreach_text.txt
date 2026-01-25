@@ -1,0 +1,12 @@
+Hi {{ contact_name or 'there' }},
+
+I came across {{ business_name }} and was impressed by what you're doing in {{ location }}.
+
+I help businesses like yours {{ value_proposition }}.
+
+Would you be interested in a quick 15-minute call to discuss how this could benefit {{ business_name }}?
+
+Best regards,
+{{ sender_name }}
+
+P.S. If this isn't relevant, just reply "not interested" and I won't reach out again.

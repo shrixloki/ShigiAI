@@ -307,6 +307,179 @@ Best regards,
                 down_sql="""
                 DROP TABLE IF EXISTS email_templates;
                 """
+            ),
+            
+            Migration(
+                version=5,
+                name="add_advanced_services_tables",
+                up_sql="""
+                -- Users and Auth
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    is_active BOOLEAN DEFAULT 1,
+                    last_login_at TEXT,
+                    email_verified BOOLEAN DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                
+                CREATE TABLE IF NOT EXISTS user_sessions (
+                    token TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    ip_address TEXT,
+                    user_agent TEXT,
+                    created_at TEXT NOT NULL,
+                    last_active_at TEXT NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                );
+                
+                -- Enrichment Data
+                CREATE TABLE IF NOT EXISTS enrichment_data (
+                    id TEXT PRIMARY KEY,
+                    lead_id TEXT NOT NULL UNIQUE,
+                    data_source TEXT NOT NULL,
+                    enriched_data TEXT NOT NULL, -- JSON
+                    confidence_score REAL,
+                    enriched_at TEXT NOT NULL,
+                    FOREIGN KEY (lead_id) REFERENCES leads (id)
+                );
+                
+                -- Scoring
+                CREATE TABLE IF NOT EXISTS lead_scores (
+                    id TEXT PRIMARY KEY,
+                    lead_id TEXT NOT NULL UNIQUE,
+                    score_type TEXT NOT NULL,
+                    score_value REAL NOT NULL,
+                    score_breakdown TEXT, -- JSON
+                    calculated_at TEXT NOT NULL,
+                    FOREIGN KEY (lead_id) REFERENCES leads (id)
+                );
+                
+                -- Compliance
+                CREATE TABLE IF NOT EXISTS do_not_contact (
+                    id TEXT PRIMARY KEY,
+                    email TEXT,
+                    domain TEXT,
+                    reason TEXT,
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_dnc_email ON do_not_contact(email);
+                CREATE INDEX IF NOT EXISTS idx_dnc_domain ON do_not_contact(domain);
+                
+                -- CRM
+                CREATE TABLE IF NOT EXISTS crm_threads (
+                    id TEXT PRIMARY KEY,
+                    lead_id TEXT NOT NULL,
+                    subject TEXT,
+                    status TEXT,
+                    last_message_at TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (lead_id) REFERENCES leads (id)
+                );
+                
+                CREATE TABLE IF NOT EXISTS crm_opportunities (
+                    id TEXT PRIMARY KEY,
+                    lead_id TEXT NOT NULL,
+                    name TEXT,
+                    stage TEXT,
+                    value REAL,
+                    close_date TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (lead_id) REFERENCES leads (id)
+                );
+                
+                -- Public Signals
+                CREATE TABLE IF NOT EXISTS public_profiles (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    business_name TEXT NOT NULL,
+                    slug TEXT UNIQUE,
+                    is_active BOOLEAN DEFAULT 0,
+                    profile_data TEXT, -- JSON
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                
+                -- Sync
+                CREATE TABLE IF NOT EXISTS sync_configs (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    name TEXT NOT NULL,
+                    source_type TEXT NOT NULL,
+                    config_data TEXT NOT NULL, -- JSON
+                    is_active BOOLEAN DEFAULT 1,
+                    last_sync_at TEXT,
+                    created_at TEXT NOT NULL
+                );
+                
+                -- Sequences (Campaigns)
+                CREATE TABLE IF NOT EXISTS email_sequences (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    status TEXT NOT NULL,
+                    steps TEXT NOT NULL, -- JSON
+                    auto_pause_on_reply BOOLEAN DEFAULT 1,
+                    max_leads_per_day INTEGER,
+                    created_by TEXT,
+                    
+                    total_enrolled INTEGER DEFAULT 0,
+                    total_completed INTEGER DEFAULT 0,
+                    total_replied INTEGER DEFAULT 0,
+                    total_bounced INTEGER DEFAULT 0,
+                    
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    version INTEGER DEFAULT 1
+                );
+                
+                CREATE TABLE IF NOT EXISTS sequence_enrollments (
+                    id TEXT PRIMARY KEY,
+                    sequence_id TEXT NOT NULL,
+                    lead_id TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    current_step_index INTEGER DEFAULT 0,
+                    next_step_scheduled TEXT,
+                    
+                    total_emails_sent INTEGER DEFAULT 0,
+                    last_email_sent_at TEXT,
+                    reply_received_at TEXT,
+                    exit_reason TEXT,
+                    metadata TEXT DEFAULT '{}',
+                    
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    completed_at TEXT,
+                    
+                    FOREIGN KEY (sequence_id) REFERENCES email_sequences (id),
+                    FOREIGN KEY (lead_id) REFERENCES leads (id)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_enrollment_sequence__status ON sequence_enrollments(sequence_id, status);
+                CREATE INDEX IF NOT EXISTS idx_enrollment_lead ON sequence_enrollments(lead_id);
+                """,
+                down_sql="""
+                DROP TABLE IF EXISTS sequence_enrollments;
+                DROP TABLE IF EXISTS email_sequences;
+                DROP TABLE IF EXISTS sync_configs;
+                DROP TABLE IF EXISTS public_profiles;
+                DROP TABLE IF EXISTS crm_opportunities;
+                DROP TABLE IF EXISTS crm_threads;
+                DROP TABLE IF EXISTS do_not_contact;
+                DROP TABLE IF EXISTS lead_scores;
+                DROP TABLE IF EXISTS enrichment_data;
+                DROP TABLE IF EXISTS user_sessions;
+                DROP TABLE IF EXISTS users;
+                """
+
             )
         ]
     
@@ -467,7 +640,10 @@ Best regards,
                 expected_tables = {
                     'leads', 'email_campaigns', 'audit_log', 
                     'state_transitions', 'schema_migrations',
-                    'rate_limits', 'email_templates'
+                    'rate_limits', 'email_templates',
+                    'users', 'user_sessions', 'enrichment_data', 'lead_scores',
+                    'do_not_contact', 'crm_threads', 'crm_opportunities',
+                    'public_profiles', 'sync_configs'
                 }
                 
                 missing_tables = expected_tables - existing_tables

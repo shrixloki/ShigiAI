@@ -22,9 +22,9 @@ from enum import Enum
 import aiohttp
 from bs4 import BeautifulSoup
 
-from config.settings import settings
-from modules.logger import action_logger
-from services.db_service import DatabaseService
+from ..config.settings import settings
+from .logger import action_logger
+from ..services.db_service import DatabaseService
 
 
 class EmailConfidence(str, Enum):

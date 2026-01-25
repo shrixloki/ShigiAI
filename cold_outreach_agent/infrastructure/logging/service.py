@@ -576,3 +576,8 @@ class ProductionLoggingService:
                 self.log_error(e, component="logging", operation="search_logs")
         
         return results
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Get a configured logger instance."""
+    return logging.getLogger(name)

@@ -12,10 +12,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
-from config.settings import settings
-from modules.logger import action_logger
-from services.db_service import DatabaseService
-from services.email_service_simple import EmailService
+from ..config.settings import settings
+from .logger import action_logger
+from ..services.db_service import DatabaseService
+from ..services.email_service_simple import EmailService
 
 
 class MessengerModule:

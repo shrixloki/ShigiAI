@@ -6,6 +6,10 @@ import {
   Users,
   Server,
   Mail,
+  BarChart3,
+  Send,
+  Kanban,
+  Settings,
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,10 +21,14 @@ interface DashboardLayoutProps {
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Activity Logs', href: '/activity', icon: Activity },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Leads', href: '/leads', icon: Users },
+  { name: 'Campaigns', href: '/campaigns', icon: Send },
+  { name: 'CRM Pipeline', href: '/pipeline', icon: Kanban },
+  { name: 'Activity Logs', href: '/activity', icon: Activity },
   { name: 'Email Templates', href: '/email-templates', icon: Mail },
   { name: 'System Health', href: '/health', icon: Server },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
