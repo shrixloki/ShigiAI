@@ -1,3 +1,3 @@
-from .server import app
+from .production_server import app
 
 __all__ = ["app"]

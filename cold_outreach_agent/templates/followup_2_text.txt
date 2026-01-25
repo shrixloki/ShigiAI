@@ -1,0 +1,14 @@
+Hi {{ contact_name or 'there' }},
+
+This will be my last email about this topic.
+
+I recently helped {{ similar_business_example }} and thought the results might interest you:
+- {{ result_1 }}
+- {{ result_2 }}
+
+If you're curious about how this could apply to {{ business_name }}, I'm happy to discuss.
+
+Otherwise, I'll respect your time and won't reach out again.
+
+Best regards,
+{{ sender_name }}
