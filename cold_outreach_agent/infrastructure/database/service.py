@@ -12,6 +12,7 @@ import aiosqlite
 
 from ...core.models.lead import Lead, LeadCreate, LeadUpdate, LeadFilter, LeadState, ReviewStatus
 from ...core.models.email import EmailCampaign, EmailCampaignCreate, EmailCampaignUpdate, EmailFilter, EmailState
+from ...core.models.campaign import EmailSequence, LeadSequenceEnrollment, SequenceStatus, LeadSequenceStatus
 from ...core.models.common import AuditLog, StateTransition, PaginationParams, PaginatedResponse
 from ...core.exceptions import DatabaseError, LeadNotFoundError, EmailCampaignNotFoundError
 from .migrations import MigrationManager
@@ -727,3 +728,240 @@ class ProductionDatabaseService:
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"])
         )
+
+    async def get_all_campaigns(self, limit: Optional[int] = None) -> List[EmailCampaign]:
+        """Get all email campaigns for analytics."""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                query = "SELECT * FROM email_campaigns ORDER BY created_at DESC"
+                if limit:
+                    query += f" LIMIT {limit}"
+                
+                cursor = await db.execute(query)
+                rows = await cursor.fetchall()
+                return [self._row_to_email_campaign(row) for row in rows]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get all campaigns: {str(e)}")
+
+    async def get_campaigns_by_range(self, start_date: datetime, end_date: datetime) -> List[EmailCampaign]:
+        """Get campaigns within a date range."""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute("""
+                    SELECT * FROM email_campaigns 
+                    WHERE created_at BETWEEN ? AND ?
+                    ORDER BY created_at DESC
+                """, (start_date.isoformat(), end_date.isoformat()))
+                rows = await cursor.fetchall()
+                return [self._row_to_email_campaign(row) for row in rows]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get campaigns by range: {str(e)}")
+
+    async def get_all_leads_for_analytics(self) -> List[Lead]:
+        """Get all leads for analytics (warning: can be large)."""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute("SELECT * FROM leads")
+                rows = await cursor.fetchall()
+                return [self._row_to_lead(row) for row in rows]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get all leads: {str(e)}")
+
+    # --- Campaign / Sequence Methods ---
+
+    async def create_sequence(self, sequence: EmailSequence) -> EmailSequence:
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    INSERT INTO email_sequences (
+                        id, name, description, status, steps, auto_pause_on_reply,
+                        max_leads_per_day, created_by, created_at, updated_at, version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    str(sequence.id), sequence.name, sequence.description,
+                    sequence.status.value if hasattr(sequence.status, 'value') else sequence.status,
+                    json.dumps([s.dict() for s in sequence.steps]),
+                    sequence.auto_pause_on_reply, sequence.max_leads_per_day,
+                    sequence.created_by, sequence.created_at.isoformat(),
+                    sequence.updated_at.isoformat(), sequence.version
+                ))
+                await db.commit()
+                return sequence
+        except Exception as e:
+            raise DatabaseError(f"Failed to create sequence: {str(e)}")
+
+    async def get_sequence(self, sequence_id: UUID) -> Optional[EmailSequence]:
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute("SELECT * FROM email_sequences WHERE id = ?", (str(sequence_id),))
+                row = await cursor.fetchone()
+                if not row: return None
+                
+                steps_data = json.loads(row['steps'])
+                # Reconstruct generic Steps (requires importing SequenceStep which we skipped, 
+                # but we can pass generic dicts to Pydantic model if structured correctly)
+                # For now assume the model handles list of dicts conversion
+                
+                return EmailSequence(
+                    id=UUID(row['id']),
+                    name=row['name'],
+                    description=row['description'],
+                    status=row['status'],  # Pydantic will cast to enum
+                    steps=steps_data,
+                    auto_pause_on_reply=bool(row['auto_pause_on_reply']),
+                    max_leads_per_day=row['max_leads_per_day'],
+                    created_by=row['created_by'],
+                    total_enrolled=row['total_enrolled'],
+                    total_completed=row['total_completed'],
+                    total_replied=row['total_replied'],
+                    total_bounced=row['total_bounced'],
+                    created_at=datetime.fromisoformat(row['created_at']),
+                    updated_at=datetime.fromisoformat(row['updated_at']),
+                    version=row['version']
+                )
+        except Exception as e:
+            raise DatabaseError(f"Failed to get sequence: {str(e)}")
+
+    async def update_sequence(self, sequence: EmailSequence):
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    UPDATE email_sequences SET
+                        name=?, description=?, status=?, steps=?, auto_pause_on_reply=?,
+                        max_leads_per_day=?, updated_at=?, version=?,
+                        total_enrolled=?, total_completed=?, total_replied=?, total_bounced=?
+                    WHERE id=?
+                """, (
+                    sequence.name, sequence.description,
+                    sequence.status.value if hasattr(sequence.status, 'value') else sequence.status,
+                    json.dumps([s.dict() for s in sequence.steps]),
+                    sequence.auto_pause_on_reply, sequence.max_leads_per_day,
+                    sequence.updated_at.isoformat(), sequence.version,
+                    sequence.total_enrolled, sequence.total_completed, 
+                    sequence.total_replied, sequence.total_bounced,
+                    str(sequence.id)
+                ))
+                await db.commit()
+        except Exception as e:
+            raise DatabaseError(f"Failed to update sequence: {str(e)}")
+
+    async def create_enrollment(self, enrollment: LeadSequenceEnrollment) -> LeadSequenceEnrollment:
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    INSERT INTO sequence_enrollments (
+                        id, sequence_id, lead_id, status, current_step_index,
+                        next_step_scheduled, total_emails_sent, last_email_sent_at,
+                        reply_received_at, exit_reason, metadata, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    str(enrollment.id), str(enrollment.sequence_id), str(enrollment.lead_id),
+                    enrollment.status.value if hasattr(enrollment.status, 'value') else enrollment.status,
+                    enrollment.current_step_index,
+                    enrollment.next_step_scheduled.isoformat() if enrollment.next_step_scheduled else None,
+                    enrollment.total_emails_sent,
+                    enrollment.last_email_sent_at.isoformat() if enrollment.last_email_sent_at else None,
+                    enrollment.reply_received_at.isoformat() if enrollment.reply_received_at else None,
+                    enrollment.exit_reason,
+                    json.dumps(enrollment.metadata),
+                    enrollment.created_at.isoformat(),
+                    enrollment.updated_at.isoformat()
+                ))
+                await db.commit()
+                return enrollment
+        except Exception as e:
+            raise DatabaseError(f"Failed to create enrollment: {str(e)}")
+
+    async def update_enrollment(self, enrollment: LeadSequenceEnrollment):
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute("""
+                    UPDATE sequence_enrollments SET
+                        status=?, current_step_index=?, next_step_scheduled=?,
+                        total_emails_sent=?, last_email_sent_at=?,
+                        reply_received_at=?, exit_reason=?, metadata=?, updated_at=?, completed_at=?
+                    WHERE id=?
+                """, (
+                    enrollment.status.value if hasattr(enrollment.status, 'value') else enrollment.status,
+                    enrollment.current_step_index,
+                    enrollment.next_step_scheduled.isoformat() if enrollment.next_step_scheduled else None,
+                    enrollment.total_emails_sent,
+                    enrollment.last_email_sent_at.isoformat() if enrollment.last_email_sent_at else None,
+                    enrollment.reply_received_at.isoformat() if enrollment.reply_received_at else None,
+                    enrollment.exit_reason, json.dumps(enrollment.metadata),
+                    enrollment.updated_at.isoformat(),
+                    enrollment.completed_at.isoformat() if enrollment.completed_at else None,
+                    str(enrollment.id)
+                ))
+                await db.commit()
+        except Exception as e:
+            raise DatabaseError(f"Failed to update enrollment: {str(e)}")
+
+    async def get_enrollment(self, enrollment_id: UUID) -> Optional[LeadSequenceEnrollment]:
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute("SELECT * FROM sequence_enrollments WHERE id = ?", (str(enrollment_id),))
+                row = await cursor.fetchone()
+                if not row: return None
+                return self._row_to_enrollment(row)
+        except Exception as e:
+            raise DatabaseError(f"Failed to get enrollment: {str(e)}")
+
+    async def get_enrollments(self, sequence_id: Optional[UUID] = None, lead_id: Optional[UUID] = None) -> List[LeadSequenceEnrollment]:
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                query = "SELECT * FROM sequence_enrollments WHERE 1=1"
+                params = []
+                if sequence_id:
+                    query += " AND sequence_id = ?"
+                    params.append(str(sequence_id))
+                if lead_id:
+                    query += " AND lead_id = ?"
+                    params.append(str(lead_id))
+                
+                cursor = await db.execute(query, tuple(params))
+                rows = await cursor.fetchall()
+                return [self._row_to_enrollment(row) for row in rows]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get enrollments: {str(e)}")
+
+    async def get_pending_enrollments(self) -> List[LeadSequenceEnrollment]:
+        try:
+            now = datetime.now()
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row
+                cursor = await db.execute("""
+                    SELECT * FROM sequence_enrollments 
+                    WHERE status = 'enrolled' 
+                    AND next_step_scheduled <= ?
+                """, (now.isoformat(),))
+                rows = await cursor.fetchall()
+                return [self._row_to_enrollment(row) for row in rows]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get pending enrollments: {str(e)}")
+            
+    def _row_to_enrollment(self, row) -> LeadSequenceEnrollment:
+        return LeadSequenceEnrollment(
+            id=UUID(row['id']),
+            sequence_id=UUID(row['sequence_id']),
+            lead_id=UUID(row['lead_id']),
+            status=row['status'],
+            current_step_index=row['current_step_index'],
+            next_step_scheduled=datetime.fromisoformat(row['next_step_scheduled']) if row['next_step_scheduled'] else None,
+            total_emails_sent=row['total_emails_sent'],
+            last_email_sent_at=datetime.fromisoformat(row['last_email_sent_at']) if row['last_email_sent_at'] else None,
+            reply_received_at=datetime.fromisoformat(row['reply_received_at']) if row['reply_received_at'] else None,
+            exit_reason=row['exit_reason'],
+            metadata=json.loads(row['metadata']),
+            created_at=datetime.fromisoformat(row['created_at']),
+            updated_at=datetime.fromisoformat(row['updated_at']),
+            completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None
+        )
+
+

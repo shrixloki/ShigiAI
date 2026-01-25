@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from ...core.models.lead import Lead, LeadUpdate
 from ...core.models.common import OperationResult
-from ...core.exceptions import WebsiteScrapingError
+from ...core.exceptions import WebsiteAnalysisError
 from ..database.service import ProductionDatabaseService
 
 @dataclass
